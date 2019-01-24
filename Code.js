@@ -67,7 +67,6 @@ function testt(){
 }
 //***********************************************************************************************************************************************************************************
 function onEdit(e){
-  Logger.log("Hello World");
   var ui = SpreadsheetApp.getUi();
   var eRange = e.source.getActiveRange();
   var sheet = eRange.getSheet();
@@ -99,13 +98,13 @@ function onEdit(e){
     if (result == ui.Button.YES) {
       var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
       var phoneInterviewSheetLastRow = getLastRow(phoneInterviewSheet, TIMESTAMPCOLUMN);
-      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 2));
       prospectiveFormResponses.getRange(row, 10).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 15));
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       var schedule = scheduler("Phone", candidateDetails[0][11], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEINTERVIEWERCOLUMN).setValue(schedule.interviewer);
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEFUNCTIONCOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.deleteRow(row);
     } 
     if (result == ui.Button.NO) {
