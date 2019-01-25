@@ -9,7 +9,7 @@ var failedSheet = spreadsheet.getSheetByName("Failed");
 var waitingSheet = spreadsheet.getSheetByName("Waiting List");
 var tatSheet = spreadsheet.getSheetByName("TAT");
 var summarySheet = spreadsheet.getSheetByName("Daily Summary");
-var interviewerSheet = spreadsheet.getSheetByName("Phone Interviewers");
+var interviewerSheet = spreadsheet.getSheetByName("Phone Interviewers/ Portfolio Reviewers");
 var technicalInterviewerSheet = spreadsheet.getSheetByName("Technical Interviewers");
 var physicalInterviewerSheet = spreadsheet.getSheetByName("Physical Interviewers");
 var internAppSheet = spreadsheet.getSheetByName("Internship Application");
@@ -19,16 +19,35 @@ var decisionMatrixSheet = spreadsheet.getSheetByName("Decision Matrix");
 var vpdecisionSheet = spreadsheet.getSheetByName("VP Decision Sheet");
 var summarySheet = spreadsheet.getSheetByName("Interviewers Summary");
 var portfolioReviewSheet = spreadsheet.getSheetByName("Portfolio Review");
+var interviewMatrixSheet = spreadsheet.getSheetByName("Interview Matrix");
 
 //Columns
 var TIMESTAMPCOLUMN = 1;
+var TATNAMECOLUMN = 1;
+var INTERVIEWERNAMECOLUMN = 1;
 var EMAILADDRESSCOLUMN = 2;
+var TATROLECOLUMN = 2;
+var INTERVIEWERFUNCTIONSCOLUMN = 2;
+var TATPROSPECTIVESCOLUMN = 3;
 var NAMECOLUMN = 3;
+var INTERVIEWERCALLTIMECOLUMN = 3;
 var ROLECOLUMN = 4;
+var TATPHONECOLUMN = 4;
+var INTERVIEWERCALLSTAKENCOLUMN = 4;
+var TATTECHNICALCOLUMN = 5;
+var TATPHYSICALCOLUMN = 6;
+var CVCOLUMN = 6;
+var PORTFOLIOCOLUMN = 7;
+var PROSPECTIVESSKYPEIDCOLUMN = 10;
 var PHONEINTERVIEWERCOLUMN = 10;
 var PHONECALLTIMECOLUMN = 11;
 var PROSPECTIVESDECISIONCOLUMN = 11;
+var PORTFOLIOREVIEWERCOLUMN = 11;
+var PROSPECTIVESFUNCTIONCOLUMN = 12;
+var PORTFOLIOREVIEWCOMMENTCOLUMN = 12;
+var PORTFOLIOREVIEWDECISIONCOLUMN = 13;
 var PHONEFUNCTIONCOLUMN = 14;
+var PHONESKYPEIDCOLUMN = 15;
 var WAITINGLISTSTATUSCOLUMN = 27;
 var FAILEDSTATUSCOLUMN = 27;
 var FAILEDSTAGECOLUMN = 28;
@@ -61,9 +80,27 @@ function onFormSubmit(e){
     sendNotificationEmail("scholarship");
   }
 }
-
-function testt(){
-  Logger.log("Hello World");
+function testr(){
+  Logger.log(check("Software Engineer"));
+}
+//***********************************************************************************************************************************************************************************
+function check(role){
+  var checker = {};
+  var values;
+  var lastRow = getLastRow(interviewMatrixSheet, 1);
+  var roles = interviewMatrixSheet.getRange(2, 1, lastRow, 1).getValues();
+  for(var i = 2; i <= lastRow; i++){
+    if(roles[i-2][0] === role){
+      values = interviewMatrixSheet.getRange(i, 2, 1, 5).getValues();
+    }
+  }
+  checker.portfolio = values[0][0];
+  checker.phone = values[0][1];
+  checker.technical1 = values[0][2];
+  checker.technical2 = values[0][3];
+  checker.physical = values[0][4];
+  
+  return checker;
 }
 //***********************************************************************************************************************************************************************************
 function onEdit(e){
@@ -74,6 +111,8 @@ function onEdit(e){
   var row = eRange.getRow();
   var column = eRange.getColumn();
   var status = e.value;
+  var role = sheet.getRange(row, ROLECOLUMN).getValue();
+  var checker = check(role);
   var candidateFunction = sheet.getRange(row, PHONEFUNCTIONCOLUMN).getValue();
 //***********************************************************************************************************************************************************************************  
   if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && (status === "Awaiting phone Interview" ||
@@ -90,20 +129,36 @@ function onEdit(e){
       prospectiveFormResponses.getRange(row,  column).setValue(e.oldValue);
   }
 //***********************************************************************************************************************************************************************************
- 
   if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting phone Interview"
-    && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "") {
+    && checker.phone === "No"){
+      ui.alert("This job role cannot be moved to phone interview stage");
+      prospectiveFormResponses.getRange(row,  column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting portfolio review"
+    && prospectiveFormResponses.getRange(row, PORTFOLIOCOLUMN).getValue() === ""){
+      ui.alert("Candidate needs to have a portfolio");
+      prospectiveFormResponses.getRange(row,  column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting portfolio review" && checker.portfolio === "No"){
+      ui.alert("This job role cannot be moved to portfolio review stage");
+      prospectiveFormResponses.getRange(row,  column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting phone Interview" && checker.phone === "Yes"
+     && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== ""){
     var result = ui.alert("Are you sure you want to move this candidate to the Phone Interview stage?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
+      var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 12).getValues();
       var phoneInterviewSheetLastRow = getLastRow(phoneInterviewSheet, TIMESTAMPCOLUMN);
       prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 2));
-      prospectiveFormResponses.getRange(row, 10).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 15));
+      prospectiveFormResponses.getRange(row, PROSPECTIVESSKYPEIDCOLUMN).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONESKYPEIDCOLUMN));
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       var schedule = scheduler("Phone", candidateDetails[0][11], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEINTERVIEWERCOLUMN).setValue(schedule.interviewer);
-      phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEFUNCTIONCOLUMN).setValue(schedule.callTime);
+      phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONECALLTIMECOLUMN).setValue(schedule.callTime);
       updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.deleteRow(row);
     } 
@@ -113,17 +168,17 @@ function onEdit(e){
   }
 //**********************************************************************************************************************************************************************************
   if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Failed" 
-    && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "") {
+    && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== ""){
     var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
       var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
       var failedSheetLastRow = getLastRow(failedSheet, TIMESTAMPCOLUMN);
-      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(failedSheet.getRange(failedSheetLastRow+ 1, 2));
       failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
       failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("Prospectives");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.deleteRow(row);
     }
     if (result == ui.Button.NO) {
@@ -131,16 +186,17 @@ function onEdit(e){
     } 
   }
 //**********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === 11 && status === "Add to waiting list" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "") {
+  if(sheetName === "Prospectives" && column === 11 && status === "Add to waiting list" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== ""
+  && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== "") {
     var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
       var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
       var waitingListSheetLastRow = getLastRow(waitingSheet, TIMESTAMPCOLUMN);
-      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
       waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.deleteRow(row);
     }
     if (result == ui.Button.NO) {
@@ -148,18 +204,19 @@ function onEdit(e){
     } 
   }
 //***********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === 11 && status === "Awaiting portfolio review" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "") {
-    var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
+  if(sheetName === "Prospectives" && column === 11 && status === "Awaiting portfolio review" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== ""
+  && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, PORTFOLIOCOLUMN).getValue() !== ""
+  && checker.portfolio === "Yes") {
+    var result = ui.alert("Move candidate for portfolio review?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
+      var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 12).getValues();
       var portfolioReviewSheetLastRow = getLastRow(portfolioReviewSheet, TIMESTAMPCOLUMN);
-      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
-      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+ 1, 2));
+      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 9).copyTo(portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+ 1, 2));
       portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
-      var schedule = scheduler("Portfolio Review", candidateDetails[0][11], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
-      portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+1, PHONEINTERVIEWERCOLUMN).setValue(schedule.interviewer);
-      portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+1, PHONEFUNCTIONCOLUMN).setValue(schedule.callTime);
+      var schedule = scheduler("Portfolio Review", candidateDetails[0][11], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5], candidateDetails[0][6]);
+      portfolioReviewSheet.getRange(portfolioReviewSheetLastRow+1, PORTFOLIOREVIEWERCOLUMN).setValue(schedule.interviewer);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
       prospectiveFormResponses.deleteRow(row);
     }
     if (result == ui.Button.NO) {
@@ -167,9 +224,20 @@ function onEdit(e){
     } 
   }
 //***********************************************************************************************************************************************************************************  
-  //Review above and test extensively to make sure it works properly, resolve sheet column discrepancies
-  //Begin from here tomorrow
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST")
+    && portfolioReviewSheet.getRange(row, PORTFOLIOREVIEWCOMMENTCOLUMN).getValue() === ""){
+      ui.alert("A comment needs to be assigned before moving this candidate");
+      portfolioReviewSheet.getRange(row,  column).setValue("");
+  }
+//***********************************************************************************************************************************************************************************  
+  //Begin from here
   //Put duplicate checker on every sheet
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && status === "YES" 
+  && portfolioReviewSheet.getRange(row, PORTFOLIOREVIEWCOMMENTCOLUMN).getValue() !== ""){
+      ui.alert("A comment needs to be assigned before moving this candidate");
+      portfolioReviewSheet.getRange(row,  column).setValue("");
+  }
+//***********************************************************************************************************************************************************************************  
   if(sheetName === "Phone Interview" && column === 13 && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") && (phoneInterviewSheet.getRange(row, 12).getValue() === "")) {
     ui.alert("Please enter a comment before moving candidate");
     phoneInterviewSheet.getRange(row, column).setValue("");
@@ -939,8 +1007,7 @@ function isDuplicate(name, sheet, colToCheck){
 }
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 
-function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber, candidateCV){
-  Logger.log(candidateFunction);
+function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber, candidateCV, candidatePortfolio){
   if(type === "Physical"){
     physicalScheduler(candidateFunction, candidateEmail, candidatePhoneNumber, candidateCV);
     return;
@@ -949,15 +1016,20 @@ function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber
   var lowest, atRow, interviewer, callTime;
   var interviewerFunctions, interviewsTaken, interviewerTypes, interviewersLastCallTime;
   switch(type){
-    case "Phone": var lastRow = getLastRow(interviewerSheet, 1);
-      interviewerFunctions = interviewerSheet.getRange(2, 2, lastRow, 1).getValues();
-      interviewersLastCallTime = interviewerSheet.getRange(2, 3, lastRow, 1).getValues();
-      interviewsTaken = interviewerSheet.getRange(2, 4, lastRow, 1).getValues();
+    case "Phone": var lastRow = getLastRow(interviewerSheet, INTERVIEWERNAMECOLUMN);
+      interviewerFunctions = interviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
+      interviewersLastCallTime = interviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
+      interviewsTaken = interviewerSheet.getRange(2, INTERVIEWERCALLSTAKENCOLUMN, lastRow, 1).getValues();
       break;
-    case "Technical": var lastRow = getLastRow(technicalInterviewerSheet, 1);
-      interviewerFunctions = technicalInterviewerSheet.getRange(2, 2, lastRow, 1).getValues();
-      interviewersLastCallTime = technicalInterviewerSheet.getRange(2, 3, lastRow, 1).getValues();
-      interviewsTaken = technicalInterviewerSheet.getRange(2, 4, lastRow, 1).getValues();
+    case "Portfolio Review": var lastRow = getLastRow(interviewerSheet, INTERVIEWERNAMECOLUMN);
+      interviewerFunctions = interviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
+      interviewersLastCallTime = interviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
+      interviewsTaken = interviewerSheet.getRange(2, INTERVIEWERCALLSTAKENCOLUMN, lastRow, 1).getValues();
+      break;            
+    case "Technical": var lastRow = getLastRow(technicalInterviewerSheet, INTERVIEWERNAMECOLUMN);
+      interviewerFunctions = technicalInterviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
+      interviewersLastCallTime = technicalInterviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
+      interviewsTaken = technicalInterviewerSheet.getRange(2, INTERVIEWERCALLSTAKENCOLUMN, lastRow, 1).getValues();
       break;
   }
   
@@ -978,32 +1050,34 @@ function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber
     }
   }
   switch(type){
-    case "Phone": interviewer = interviewerSheet.getRange(atRow, 1).getValue();
+    case "Phone": interviewer = interviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
       break;
-    case "Technical": interviewer = technicalInterviewerSheet.getRange(atRow, 1).getValue();
+    case "Portfolio Review": interviewer = interviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
+      break;
+    case "Technical": interviewer = technicalInterviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
       break;
   }
   
   callTime = new Date(interviewersLastCallTime[atRow-2][0]);
   var hour = callTime.getHours();
   
-  if(hour === 18){
+  if(hour === 16){
     if(callTime.getDay()+1 === 6){
       callTime.setDate(callTime.getDate()+3);
-      callTime.setHours(17,0,0);
+      callTime.setHours(15,0,0);
     }
     else{
       callTime.setDate(callTime.getDate()+1);
-      callTime.setHours(17,0,0);
+      callTime.setHours(15,0,0);
     }
   }
-  if(hour === 17){
-    callTime.setHours(18, 0, 0);
+  if(hour === 15){
+    callTime.setHours(16, 0, 0);
   }
   
   schedule.interviewer = interviewer;
   schedule.callTime = callTime;
-  sendInvites(candidateEmail, candidatePhoneNumber, candidateCV, interviewer, callTime);
+  sendInvites(type, candidateEmail, candidatePhoneNumber, candidateCV, interviewer, callTime, candidatePortfolio);
   updateSummarySheet(interviewer,atRow, type, callTime);
   return schedule;
 }
@@ -1017,11 +1091,13 @@ function updateSummarySheet(interviewer, atRow, type, callTime){
   var lastRow = getLastRow(summarySheet, 1);
   var names = summarySheet.getRange(2, 1, lastRow, 1).getValues();
   switch(type){
-    case "Phone": interviewerSheet.getRange(atRow, 4).setValue(interviewerSheet.getRange(atRow, 4).getValue()+1);
+    case "Phone": interviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).setValue(interviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).getValue()+1);
       break;
-    case "Technical": technicalInterviewerSheet.getRange(atRow, 4).setValue(technicalInterviewerSheet.getRange(atRow, 4).getValue()+1);
+    case "Portfolio Review": interviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).setValue(interviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).getValue()+1);
       break;
-    case "Physical": physicalInterviewerSheet.getRange(atRow, 4).setValue(physicalInterviewerSheet.getRange(atRow, 4).getValue()+1);
+    case "Technical": technicalInterviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).setValue(technicalInterviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).getValue()+1);
+      break;
+    case "Physical": physicalInterviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).setValue(physicalInterviewerSheet.getRange(atRow, INTERVIEWERCALLSTAKENCOLUMN).getValue()+1);
       break;
   }
   for(var i = 2; i <= lastRow; i++){
@@ -1045,7 +1121,7 @@ function isWeekday() {
 }
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 
-function sendInvites(type, candidateEmail, candidatePhoneNumber, candidateCV, interviewer, callTime){
+function sendInvites(type, candidateEmail, candidatePhoneNumber, candidateCV, interviewer, callTime, candidatePortfolio){
   var interviewerEmail = getEmployeeEmail(interviewer);
   var endTime = new Date(callTime);
   var hour = endTime.getHours();
@@ -1055,6 +1131,13 @@ function sendInvites(type, candidateEmail, candidatePhoneNumber, candidateCV, in
   if(type === "Phone"){
     CalendarApp.getCalendarById("recruitment@teamapt.com").createEvent('TeamApt Limited - Phone Interview', callTime, endTime, {
       description: 'CV: ' + candidateCV + '\n\nPhone: ' + candidatePhoneNumber,
+      guests: guestEmails,
+      sendInvites: true
+    });
+  }
+  if(type === "Portfolio Review"){
+    CalendarApp.getCalendarById("recruitment@teamapt.com").createEvent('TeamApt Limited - Portfolio Review', callTime, endTime, {
+      description: 'CV: ' + candidateCV + '\n\nPortfolio: ' + candidatePortfolio,
       guests: guestEmails,
       sendInvites: true
     });
