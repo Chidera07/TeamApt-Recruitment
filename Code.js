@@ -1,7 +1,9 @@
 //Sheets
 var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 var prospectiveFormResponses = spreadsheet.getSheetByName("Prospectives");
+var portfolioReviewSheet = spreadsheet.getSheetByName("Portfolio Review");
 var phoneInterviewSheet = spreadsheet.getSheetByName("Phone Interview");
+var firstTechnicalnterviewSheet = spreadsheet.getSheetByName("1st Technical Review");
 var technicalInterviewSheet = spreadsheet.getSheetByName("Technical Interview");
 var physicalInterviewSheet = spreadsheet.getSheetByName("Physical Interview");
 var hiredSheet = spreadsheet.getSheetByName("Accepted");
@@ -10,7 +12,7 @@ var waitingSheet = spreadsheet.getSheetByName("Waiting List");
 var tatSheet = spreadsheet.getSheetByName("TAT");
 var summarySheet = spreadsheet.getSheetByName("Daily Summary");
 var interviewerSheet = spreadsheet.getSheetByName("Phone Interviewers/ Portfolio Reviewers");
-var technicalInterviewerSheet = spreadsheet.getSheetByName("Technical Interviewers");
+var technicalInterviewerSheet = spreadsheet.getSheetByName("1st and 2nd Technical Interviewers");
 var physicalInterviewerSheet = spreadsheet.getSheetByName("Physical Interviewers");
 var internAppSheet = spreadsheet.getSheetByName("Internship Application");
 var scholarAppSheet = spreadsheet.getSheetByName("Scholarship Application");
@@ -18,7 +20,6 @@ var oldCompletedSheet = spreadsheet.getSheetByName("Completed");
 var decisionMatrixSheet = spreadsheet.getSheetByName("Decision Matrix");
 var vpdecisionSheet = spreadsheet.getSheetByName("VP Decision Sheet");
 var summarySheet = spreadsheet.getSheetByName("Interviewers Summary");
-var portfolioReviewSheet = spreadsheet.getSheetByName("Portfolio Review");
 var interviewMatrixSheet = spreadsheet.getSheetByName("Interview Matrix");
 
 //Columns
@@ -39,18 +40,33 @@ var TATPHYSICALCOLUMN = 6;
 var CVCOLUMN = 6;
 var PORTFOLIOCOLUMN = 7;
 var PROSPECTIVESSKYPEIDCOLUMN = 10;
-var PHONEINTERVIEWERCOLUMN = 10;
-var PHONECALLTIMECOLUMN = 11;
+var PHONEINTERVIEWERCOLUMN = 13;
+var PHONECALLTIMECOLUMN = 14;
+var PHONESKYPEIDCOLUMN = 10;
 var PROSPECTIVESDECISIONCOLUMN = 11;
 var PORTFOLIOREVIEWERCOLUMN = 11;
 var PROSPECTIVESFUNCTIONCOLUMN = 12;
 var PORTFOLIOREVIEWCOMMENTCOLUMN = 12;
 var PORTFOLIOREVIEWDECISIONCOLUMN = 13;
-var PHONEFUNCTIONCOLUMN = 14;
-var PHONESKYPEIDCOLUMN = 15;
-var WAITINGLISTSTATUSCOLUMN = 27;
-var FAILEDSTATUSCOLUMN = 27;
-var FAILEDSTAGECOLUMN = 28;
+var PHONEINTERVIEWERCOMMENTCOLUMN = 15;
+var PHONEDECISIONCOLUMN = 16;
+var TECHNICALINTERVIEWERCOLUMN = 16;
+var FIRSTTECHNICALINTERVIEWERCOLUMN = 16;
+var FIRSTTECHNICALCALLTIMECOLUMN = 17;
+var PHONEFUNCTIONCOLUMN = 17;
+var FIRSTTECHNICALINTERVIEWERCOMMENTCOLUMN = 18;
+var TECHNICALCALLTIMECOLUMN = 20;
+var FIRSTTECHNICALDECISIONCOLUMN = 20;
+var PHYSICALCALLTIMECOLUMN = 21;
+var TECHNICALINTERVIEWERCOMMENTCOLUMN = 21;
+var TECHNICALDECISIONCOLUMN = 23;
+var PHYSICALINTERVIEWERCOLUMN = 25;
+var PHYSICALINTERVIEWERCOMMENTCOLUMN = 26;
+var PHYSICALINTERVIEWERTWOCOLUMN = 27;
+var WAITINGLISTSTATUSCOLUMN = 31;
+var FAILEDSTATUSCOLUMN = 33;
+var PHYSICALDECISIONCOLUMN = 33;
+var FAILEDSTAGECOLUMN = 34;
 
 var functions = ["Engineering", "Products","Network & Infrastructure", "Customer Success", "Marketing", 
                  "Finance", "Legal & Risk", "Business Development", "HR and Admin", "Management", "MIS", "Creatives"];
@@ -79,9 +95,6 @@ function onFormSubmit(e){
   if(sheet === "Scholarship Application"){
     sendNotificationEmail("scholarship");
   }
-}
-function testr(){
-  Logger.log(check("Software Engineer"));
 }
 //***********************************************************************************************************************************************************************************
 function check(role){
@@ -146,15 +159,13 @@ function onEdit(e){
       prospectiveFormResponses.getRange(row,  column).setValue(e.oldValue);
   }
 //***********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting phone Interview" && checker.phone === "Yes"
-     && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== ""){
+  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Awaiting phone Interview" && checker.phone === "Yes"){
     var result = ui.alert("Are you sure you want to move this candidate to the Phone Interview stage?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
       var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 12).getValues();
       var phoneInterviewSheetLastRow = getLastRow(phoneInterviewSheet, TIMESTAMPCOLUMN);
-      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 2));
-      prospectiveFormResponses.getRange(row, PROSPECTIVESSKYPEIDCOLUMN).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONESKYPEIDCOLUMN));
+      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 9).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 2));
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       var schedule = scheduler("Phone", candidateDetails[0][11], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
       phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEINTERVIEWERCOLUMN).setValue(schedule.interviewer);
@@ -167,8 +178,7 @@ function onEdit(e){
     } 
   }
 //**********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Failed" 
-    && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== ""){
+  if(sheetName === "Prospectives" && column === PROSPECTIVESDECISIONCOLUMN && status === "Failed"){
     var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
@@ -186,14 +196,13 @@ function onEdit(e){
     } 
   }
 //**********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === 11 && status === "Add to waiting list" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== ""
-  && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== "") {
+  if(sheetName === "Prospectives" && column === 11 && status === "Add to waiting list") {
     var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
       var candidateDetails = prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN, 1, 11).getValues();
       var waitingListSheetLastRow = getLastRow(waitingSheet, TIMESTAMPCOLUMN);
-      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 8).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN, 1, 9).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
       waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
       waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
       updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Prospectives", candidateDetails[0][0]);
@@ -204,9 +213,7 @@ function onEdit(e){
     } 
   }
 //***********************************************************************************************************************************************************************************
-  if(sheetName === "Prospectives" && column === 11 && status === "Awaiting portfolio review" && prospectiveFormResponses.getRange(row, TIMESTAMPCOLUMN).getValue() !== ""
-  && prospectiveFormResponses.getRange(row, EMAILADDRESSCOLUMN).getValue() !== "" && prospectiveFormResponses.getRange(row, PORTFOLIOCOLUMN).getValue() !== ""
-  && checker.portfolio === "Yes") {
+  if(sheetName === "Prospectives" && column === 11 && status === "Awaiting portfolio review" && checker.portfolio === "Yes") {
     var result = ui.alert("Move candidate for portfolio review?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
@@ -227,386 +234,676 @@ function onEdit(e){
   if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST")
     && portfolioReviewSheet.getRange(row, PORTFOLIOREVIEWCOMMENTCOLUMN).getValue() === ""){
       ui.alert("A comment needs to be assigned before moving this candidate");
-      portfolioReviewSheet.getRange(row,  column).setValue("");
+      portfolioReviewSheet.getRange(row,  column).setValue(e.oldValue);
   }
 //***********************************************************************************************************************************************************************************  
-  //Begin from here
-  //Put duplicate checker on every sheet
-  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && status === "YES" 
-  && portfolioReviewSheet.getRange(row, PORTFOLIOREVIEWCOMMENTCOLUMN).getValue() !== ""){
-      ui.alert("A comment needs to be assigned before moving this candidate");
-      portfolioReviewSheet.getRange(row,  column).setValue("");
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST")
+    && portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN).getValue() === ""){
+      ui.alert("A timestamp needs to be assigned before moving this candidate");
+      portfolioReviewSheet.getRange(row,  column).setValue(e.oldValue);
   }
-//***********************************************************************************************************************************************************************************  
-  if(sheetName === "Phone Interview" && column === 13 && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") && (phoneInterviewSheet.getRange(row, 12).getValue() === "")) {
-    ui.alert("Please enter a comment before moving candidate");
-    phoneInterviewSheet.getRange(row, column).setValue("");
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST") 
+    && portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN).getValue() === ""){
+      ui.alert("An email address needs to be assigned before moving this candidate");
+      portfolioReviewSheet.getRange(row,  column).setValue(e.oldValue);
   }
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "YES" && candidateFunction === functions[0] && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
-    var result = ui.alert("Are you sure you want to move this candidate to the Technical Interview stage?", ui.ButtonSet.YES_NO);
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.phone === "Yes"){
+    var result = ui.alert("Are you sure you want to move this candidate to the Phone Interview stage?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      decisionMatrix("phone", row);
-      calculateDailySummary("Phone Interview");
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 13).getValues();
-      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      moveToTechnicalInterviewEmail(candidateDetails[0][1], candidateDetails[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 11).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
-      phoneInterviewSheet.getRange(row, 15).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 19));
-      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 13).setValue("YES");
-//      var schedule = scheduler("Technical", candidateDetails[0][12], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 14).setValue(schedule.interviewer);
-//      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 15).setValue(schedule.callTime);
-      phoneInterviewSheet.deleteRow(row);
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var phoneInterviewSheetLastRow = getLastRow(phoneInterviewSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, 2));
+      phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      var schedule = scheduler("Phone", candidateDetails[0][13], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONEINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      phoneInterviewSheet.getRange(phoneInterviewSheetLastRow+1, PHONECALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
     } 
     if (result == ui.Button.NO) {
-      phoneInterviewSheet.getRange(row, column).setValue("");
-    } 
+      portfolioReviewSheet.getRange(row, column).setValue(e.oldValue);
+    }
+    return;
   }
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "NO" && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.technical1 === "Yes"){
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var firstTechnicalInterviewSheetLastRow = getLastRow(firstTechnicalnterviewSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, 2));
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      var schedule = scheduler("First Technical", candidateDetails[0][13], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      portfolioReviewSheet.getRange(row, column).setValue(e.oldValue);
+    }
+    return;
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.technical2 === "Yes"){
+    var result = ui.alert("Are you sure you want to move this candidate to the Second Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      var schedule = scheduler("Technical", candidateDetails[0][13], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      portfolioReviewSheet.getRange(row, column).setValue(e.oldValue);
+    }
+    return;
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.physical === "Yes"){
+    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      var schedule = scheduler("Physical", candidateDetails[0][13], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      portfolioReviewSheet.getRange(row, column).setValue(e.oldValue);
+    }
+    return;
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && status === "NO"){
     var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      calculateDailySummary("Phone Interview");
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 2).getValues();
-      var failedSheetLastRow = getLastRow(failedSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      sendRejectEmail_Phone(candidateDetails[0][1], candidateDetails[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 11).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
-      failedSheet.getRange(failedSheetLastRow+1, 1).setValue(new Date());
-      failedSheet.getRange(failedSheetLastRow+1, 27).setValue("Failed");
-      failedSheet.getRange(failedSheetLastRow+1, 28).setValue("Phone Interview");
-      phoneInterviewSheet.deleteRow(row);
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var failedSheetLastRow = getLastRow(failedSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(failedSheet.getRange(failedSheetLastRow+ 1, 2));
+      failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("Prospectives");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
-      phoneInterviewSheet.getRange(eRange.getRow(),  eRange.getColumn()).setValue("");
+      portfolioReviewSheet.getRange(row,  column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "WAITING LIST" && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Portfolio Review" && column === PORTFOLIOREVIEWDECISIONCOLUMN && status === "WAITING LIST"){
     var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 2).getValues();
+      var candidateDetails = portfolioReviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 14).getValues();
+      var waitingListSheetLastRow = getLastRow(waitingSheet, TIMESTAMPCOLUMN);
+      portfolioReviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 11).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Portfolio Review", candidateDetails[0][0]);
+      calculateDailySummary("Porfolio Review");
+      portfolioReviewSheet.deleteRow(row);
+    }
+    if (result == ui.Button.NO) {
+      portfolioReviewSheet.getRange(row,  column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") 
+    && (phoneInterviewSheet.getRange(row, PHONEINTERVIEWERCOMMENTCOLUMN).getValue() === "")) {
+    ui.alert("Please enter a comment before moving candidate");
+    phoneInterviewSheet.getRange(row, column).setValue(e.oldValues);
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST")
+    && phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN).getValue() === ""){
+      ui.alert("A timestamp needs to be assigned before moving this candidate");
+      phoneInterviewSheet.getRange(row,  column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && (status === "YES" || status === "NO" || status === "MAYBE" || status === "WAITING LIST") 
+    && phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN).getValue() === ""){
+      ui.alert("An email address needs to be assigned before moving this candidate");
+      phoneInterviewSheet.getRange(row,  column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************
+  //four
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "YES" && checker.technical1 === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var firstTechnicalInterviewSheetLastRow = getLastRow(firstTechnicalnterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, 2));
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, 19).setValue("YES");
+//      var schedule = scheduler("First Technical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToTechnicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  //five
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "MAYBE" && checker.technical1 === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var firstTechnicalInterviewSheetLastRow = getLastRow(firstTechnicalnterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, 2));
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, 19).setValue("MAYBE");
+//      var schedule = scheduler("First Technical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      firstTechnicalnterviewSheet.getRange(firstTechnicalInterviewSheetLastRow+1, FIRSTTECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToTechnicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  //six
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "YES" && checker.technical2 === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 22).setValue("YES");
+      var schedule = scheduler("Technical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToTechnicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  //seven
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "MAYBE" && checker.technical2 === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 22).setValue("MAYBE");
+      var schedule = scheduler("Technical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToTechnicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  //eight
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "YES" && checker.physical === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 22).setValue("YES");
+      var schedule = scheduler("Physical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToPhysicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  //nine
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "MAYBE" && checker.physical === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the First Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, TIMESTAMPCOLUMN);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 22).setValue("MAYBE");
+      var schedule = scheduler("Physical", candidateDetails[0][16], candidateDetails[0][1], candidateDetails[0][4], candidateDetails[0][5]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      moveToPhysicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+//      decisionMatrix("phone", row);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "NO") {
+    var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
+      var failedSheetLastRow = getLastRow(failedSheet, 1);
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
+      failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("Phone Interview");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      sendRejectEmail_Phone(candidateDetails[0][2], candidateDetails[0][1]);
+      calculateDailySummary("Phone Interview");
+      phoneInterviewSheet.deleteRow(row);
+    }
+    if (result == ui.Button.NO) {
+      phoneInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************   
+  if(sheetName === "Phone Interview" && column === PHONEDECISIONCOLUMN && status === "WAITING LIST") {
+    var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = phoneInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 17).getValues();
       var waitingListSheetLastRow = getLastRow(waitingSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 8).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
-      waitingSheet.getRange(waitingListSheetLastRow+1, 1).setValue(new Date());
-      waitingSheet.getRange(waitingListSheetLastRow+1, 10).setValue("Waiting List");
+      phoneInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 14).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Phone Interview", candidateDetails[0][0]);
+      calculateDailySummary("Phone Interview");
       phoneInterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
       phoneInterviewSheet.getRange(row,  column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "MAYBE" && candidateFunction === functions[0] && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
-    var result = ui.alert("Are you sure you want to move this candidate to the Technical Interview stage but flag "+
-                          "candidate as a maybe?", ui.ButtonSet.YES_NO);
-    
-    if (result == ui.Button.YES) {
-      decisionMatrix("phone", row);
-      calculateDailySummary("Phone Interview");
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 13).getValues();
-      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      moveToTechnicalInterviewEmail(candidateDetails[0][1], candidateDetails[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 11).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
-      phoneInterviewSheet.getRange(row, 15).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 19));
-      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 13).setValue("MAYBE");
-//      var schedule = scheduler("Technical", candidateDetails[0][12], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 14).setValue(schedule.interviewer);
-//      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 15).setValue(schedule.callTime);
-      phoneInterviewSheet.deleteRow(row);
-    } 
-    if (result == ui.Button.NO) {
-      phoneInterviewSheet.getRange(row, column).setValue("");
-    } 
-  }
-  
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "YES" && candidateFunction != functions[0] && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
-    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage?", ui.ButtonSet.YES_NO);
-    
-    if (result == ui.Button.YES) {
-      decisionMatrix("phone", row);
-      calculateDailySummary("Phone Interview");
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 13).getValues();
-      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 11).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 13).setValue("YES");
-//      var schedule = scheduler("Physical", candidateDetails[0][12], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 18).setValue(schedule.callTime);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 19).setValue(schedule.interviewer);
-      phoneInterviewSheet.deleteRow(row);
-    } 
-    if (result == ui.Button.NO) {
-      phoneInterviewSheet.getRange(row, column).setValue("");
-    } 
-  }
-  
-  if(sheetName === "Phone Interview" && column === 13 && status === "MAYBE" && candidateFunction != functions[0] && (phoneInterviewSheet.getRange(row, 12).getValue() !== "")) {
-    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage but flag "+
-                          "candidate as a maybe?", ui.ButtonSet.YES_NO);
-    
-    if (result == ui.Button.YES) {
-      decisionMatrix("phone", row);
-      calculateDailySummary("Phone Interview");
-      var candidateDetails = phoneInterviewSheet.getRange(row, 2, 1, 13).getValues();
-      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
-      var values = phoneInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Phone Interview", values[0][0]);
-      moveToTechnicalInterviewEmail(candidateDetails[0][1], candidateDetails[0][0]);
-      phoneInterviewSheet.getRange(row, 2, 1, 11).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 13).setValue("MAYBE");
-//      var schedule = scheduler("Physical", candidateDetails[0][12], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 18).setValue(schedule.callTime);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 19).setValue(schedule.interviewer);
-      phoneInterviewSheet.deleteRow(row);
-    } 
-    if (result == ui.Button.NO) {
-      phoneInterviewSheet.getRange(row, column).setValue("");
-    } 
-  }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-  if(sheetName === "Technical Interview" && column === 17 && (status === "YES" || status === "MAYBE" || status === "NO") && (technicalInterviewSheet.getRange(row, 16).getValue() === "")) {
+//***********************************************************************************************************************************************************************************  
+  if(sheetName === "1st Technical Review" && column === FIRSTTECHNICALDECISIONCOLUMN && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") 
+    && (firstTechnicalnterviewSheet.getRange(row, FIRSTTECHNICALINTERVIEWERCOMMENTCOLUMN).getValue() === "")) {
     ui.alert("Please enter a comment before moving candidate");
-    technicalInterviewSheet.getRange(row, column).setValue("");
+    firstTechnicalnterviewSheet.getRange(row, column).setValue(e.oldValue);
   }
-  
-  if(sheetName === "Technical Interview" && column === 17 && status === "YES" && (technicalInterviewSheet.getRange(row, 16).getValue() !== "")) {
+//***********************************************************************************************************************************************************************************    
+  //ten
+  if(sheetName === "1st Technical Review" && column === FIRSTTECHNICALDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.technical2 === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the Second Technical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = firstTechnicalnterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 21).getValues();
+      var technicalInterviewSheetLastRow = getLastRow(technicalInterviewSheet, 1);
+      firstTechnicalnterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 17).copyTo(technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 2));
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, 22).setValue(candidateDetails[0][18]);
+      var schedule = scheduler("Technical", candidateDetails[0][20], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      technicalInterviewSheet.getRange(technicalInterviewSheetLastRow+1, TECHNICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "First Technical Interview", candidateDetails[0][0]);
+      moveToTechnicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+      //decisionMatrix("first technical", row);
+      calculateDailySummary("First Technical Interview");
+      firstTechnicalnterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      firstTechnicalnterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************    
+  //eleven
+  if(sheetName === "1st Technical Review" && column === FIRSTTECHNICALDECISIONCOLUMN && (status === "YES" || status === "MAYBE") && checker.physical === "Yes") {
     var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      decisionMatrix("technical", row);
-      calculateDailySummary("Technical Interview");
-      var candidateDetails = technicalInterviewSheet.getRange(row, 2, 1, 17).getValues();
+      var candidateDetails = firstTechnicalnterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 21).getValues();
       var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
-      var values = technicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Technical Interview", values[0][0]);
-      moveToPhysicalInterviewEmail(candidateDetails[0][1], candidateDetails[0][0]);
-      technicalInterviewSheet.getRange(row, 2, 1, 15).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 17).setValue("YES");
-//      var schedule = scheduler("Physical", candidateDetails[0][16], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 18).setValue(schedule.callTime);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 19).setValue(schedule.interviewer);
-      technicalInterviewSheet.deleteRow(row);
+      firstTechnicalnterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 17).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 22).setValue(candidateDetails[0][18]);
+      var schedule = scheduler("Physical", candidateDetails[0][20], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "First Technical Interview", candidateDetails[0][0]);
+      moveToPhysicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+      //decisionMatrix("first technical", row);
+      calculateDailySummary("First Technical Interview");
+      firstTechnicalnterviewSheet.deleteRow(row);
     } 
     if (result == ui.Button.NO) {
-      technicalInterviewSheet.getRange(row, column).setValue("");
+      firstTechnicalnterviewSheet.getRange(row, column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Technical Interview" && column === 17 && status === "NO" && (technicalInterviewSheet.getRange(row, 16).getValue() !== "")) {
+//***********************************************************************************************************************************************************************************    
+  if(sheetName === "1st Technical Review" && column === FIRSTTECHNICALDECISIONCOLUMN && status === "NO") {
     var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      calculateDailySummary("Technical Interview");
-      var candidateDetails = technicalInterviewSheet.getRange(row, 2, 1, 2).getValues();
+      var candidateDetails = firstTechnicalnterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 21).getValues();
       var failedSheetLastRow = getLastRow(failedSheet, 1);
-      var values = technicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Technical Interview", values[0][0]);
-      sendRejectEmail_Technical(candidateDetails[0][1], candidateDetails[0][0]);
-      technicalInterviewSheet.getRange(row, 2, 1, 15).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
-      failedSheet.getRange(failedSheetLastRow+1, 1).setValue(new Date());
-      failedSheet.getRange(failedSheetLastRow+1, 27).setValue("Failed");
-      failedSheet.getRange(failedSheetLastRow+1, 28).setValue("Technical Interview");
-      technicalInterviewSheet.deleteRow(row);
+      firstTechnicalnterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 17).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
+      failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("1st Technical Review");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "First Technical Interview", candidateDetails[0][0]);
+      sendRejectEmail_Technical(candidateDetails[0][2], candidateDetails[0][1]);
+      calculateDailySummary("First Technical Interview");
+      firstTechnicalnterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
-      technicalInterviewSheet.getRange(row, column).setValue("");
+      firstTechnicalnterviewSheet.getRange(row, column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Technical Interview" && column === 17 && status === "WAITING LIST" && (technicalInterviewSheet.getRange(row, 16).getValue() !== "")) {
+//***********************************************************************************************************************************************************************************    
+  if(sheetName === "1st Technical Review" && column === FIRSTTECHNICALDECISIONCOLUMN && status === "WAITING LIST") {
     var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      var candidateDetails = technicalInterviewSheet.getRange(row, 2, 1, 2).getValues();
+      var candidateDetails = firstTechnicalnterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 21).getValues();
       var waitingListSheetLastRow = getLastRow(waitingSheet, 1);
-      var values = technicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Technical Interview", values[0][0]);
-      technicalInterviewSheet.getRange(row, 2, 1, 8).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
-      waitingSheet.getRange(waitingListSheetLastRow+1, 1).setValue(new Date());
-      waitingSheet.getRange(waitingListSheetLastRow+1, 10).setValue("Waiting List");
+      firstTechnicalnterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 17).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "First Technical Interview", candidateDetails[0][0]);
+      calculateDailySummary("First Technical Interview");
+      firstTechnicalnterviewSheet.deleteRow(row);
+    }
+    if (result == ui.Button.NO) {
+      firstTechnicalnterviewSheet.getRange(row,  column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************     
+  if(sheetName === "Technical Interview" && column === TECHNICALDECISIONCOLUMN && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") 
+    && (technicalInterviewSheet.getRange(row, TECHNICALINTERVIEWERCOMMENTCOLUMN).getValue() === "")) {
+    ui.alert("Please enter a comment before moving candidate");
+    technicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
+  }
+//***********************************************************************************************************************************************************************************    
+  //twelve
+  if(sheetName === "Technical Interview" && column === TECHNICALDECISIONCOLUMN && status === "YES" && checker.physical === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = technicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 24).getValues();
+      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
+      technicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 20).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 22).setValue(candidateDetails[0][21]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 23).setValue("YES");
+      var schedule = scheduler("Physical", candidateDetails[0][23], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Technical Interview", candidateDetails[0][0]);
+      moveToPhysicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+      //decisionMatrix("first technical", row);
+      calculateDailySummary("Technical Interview");
+      technicalInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      technicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************    
+  //thirteen
+  if(sheetName === "Technical Interview" && column === TECHNICALDECISIONCOLUMN && status === "MAYBE" && checker.physical === "Yes") {
+    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = technicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 24).getValues();
+      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
+      technicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 20).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 22).setValue(candidateDetails[0][21]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 23).setValue("MAYBE");
+      var schedule = scheduler("Physical", candidateDetails[0][23], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERCOLUMN).setValue(schedule.interviewer);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALINTERVIEWERTWOCOLUMN).setValue(schedule.interviewer2);
+      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, PHYSICALCALLTIMECOLUMN).setValue(schedule.callTime);
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Technical Interview", candidateDetails[0][0]);
+      moveToPhysicalInterviewEmail(candidateDetails[0][2], candidateDetails[0][1]);
+      //decisionMatrix("first technical", row);
+      calculateDailySummary("Technical Interview");
+      technicalInterviewSheet.deleteRow(row);
+    } 
+    if (result == ui.Button.NO) {
+      technicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************    
+ if(sheetName === "Technical Interview" && column === TECHNICALDECISIONCOLUMN && status === "NO") {
+    var result = ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = technicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 24).getValues();
+      var failedSheetLastRow = getLastRow(failedSheet, 1);
+      technicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 20).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
+      failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("1st Technical Review");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Technical Interview", candidateDetails[0][0]);
+      sendRejectEmail_Technical(candidateDetails[0][2], candidateDetails[0][1]);
+      calculateDailySummary("Technical Interview");
+      technicalInterviewSheet.deleteRow(row);
+    }
+    if (result == ui.Button.NO) {
+      technicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
+    } 
+  }
+//***********************************************************************************************************************************************************************************    
+  if(sheetName === "Technical Interview" && column === TECHNICALDECISIONCOLUMN && status === "WAITING LIST") {
+    var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
+    
+    if (result == ui.Button.YES) {
+      var candidateDetails = technicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 24).getValues();
+      var waitingListSheetLastRow = getLastRow(waitingSheet, 1);
+      technicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 20).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Technical Interview", candidateDetails[0][0]);
+      calculateDailySummary("Technical Interview");
       technicalInterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
       technicalInterviewSheet.getRange(row,  column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Technical Interview" && column === 17 && status === "MAYBE" && (technicalInterviewSheet.getRange(row, 16).getValue() !== "")) {
-    var result = ui.alert("Are you sure you want to move this candidate to the Physical Interview stage but flag "+
-                          "candidate as a maybe?", ui.ButtonSet.YES_NO);
-    
-    if (result == ui.Button.YES) {
-      decisionMatrix("technical", row);
-      calculateDailySummary("Technical Interview");
-      var candidateDetails = technicalInterviewSheet.getRange(row, 2, 1, 2).getValues();
-      var physicalInterviewSheetLastRow = getLastRow(physicalInterviewSheet, 1);
-      var values = technicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Technical Interview", values[0][0]);
-      moveToPhysicalInterviewEmail(candidateDetails[0][1], candidateDetails[0][0]);
-      technicalInterviewSheet.getRange(row, 2, 1, 15).copyTo(physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 2));
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 1).setValue(new Date());
-      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 17).setValue("MAYBE");
-//      var schedule = scheduler("Physical", candidateDetails[0][16], candidateDetails[0][0], candidateDetails[0][3], candidateDetails[0][4]);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 18).setValue(schedule.callTime);
-//      physicalInterviewSheet.getRange(physicalInterviewSheetLastRow+1, 19).setValue(schedule.interviewer);
-      technicalInterviewSheet.deleteRow(row);
-    } 
-    if (result == ui.Button.NO) {
-      technicalInterviewSheet.getRange(row, column).setValue("");
-    } 
+//***********************************************************************************************************************************************************************************      
+  if(sheetName === "Physical Interview" && column === PHYSICALDECISIONCOLUMN && (status === "YES" || status === "MAYBE" || status === "NO" || status === "WAITING LIST") 
+    && (physicalInterviewSheet.getRange(row, PHYSICALINTERVIEWERCOMMENTCOLUMN).getValue() === "")) {
+    ui.alert("Please enter a comment before moving candidate");
+    physicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
   }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------    
-  if(sheetName === "Physical Interview" && column === 27 && status === "YES") {
+//***********************************************************************************************************************************************************************************    
+  if(sheetName === "Physical Interview" && column === PHYSICALDECISIONCOLUMN && status === "YES") {
     var result = ui.alert("Are you sure you want to hire this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      decisionMatrix("physical", row);
-      calculateDailySummary("Physical Interview");
+      var candidateDetails = physicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 34).getValues();
       var hiredSheetLastRow = getLastRow(hiredSheet, 1);
-      var values = physicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Physical Interview", values[0][0]);
-      var decision = makeFinalDecision(hiredSheetLastRow+1, physicalInterviewSheet.getRange(row, 13).getValue(), physicalInterviewSheet.getRange(row, 17).getValue(), "YES");
+      var decision = makeFinalDecision(hiredSheetLastRow+1, candidateDetails[0][21], candidateDetails[0][22], "YES");
       if(decision === "FULL TIME HIRE"){
-        physicalInterviewSheet.getRange(row, 2, 1, 25).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
-        hiredSheet.getRange(hiredSheetLastRow+1, 27).setValue("YES");
-        hiredSheet.getRange(hiredSheetLastRow+1, 28).setValue("FULL TIME HIRE");
-        hiredSheet.getRange(hiredSheetLastRow+1, 29).setValue("Awaiting Feedback");
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("YES");
+        hiredSheet.getRange(hiredSheetLastRow+1, 34).setValue("FULL TIME HIRE");
+        hiredSheet.getRange(hiredSheetLastRow+1, 35).setValue("Awaiting Feedback");
       }
       else if(decision === "CONTRACT"){
-        physicalInterviewSheet.getRange(row, 2, 1, 25).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
-        hiredSheet.getRange(hiredSheetLastRow+1, 27).setValue("YES");
-        hiredSheet.getRange(hiredSheetLastRow+1, 28).setValue("CONTRACT");
-        hiredSheet.getRange(hiredSheetLastRow+1, 29).setValue("Awaiting Feedback");
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("YES");
+        hiredSheet.getRange(hiredSheetLastRow+1, 34).setValue("CONTRACT");
+        hiredSheet.getRange(hiredSheetLastRow+1, 35).setValue("Awaiting Feedback");
       }
       else{
         var vpdecisionSheetLastRow = getLastRow(vpdecisionSheet, 1);
-        physicalInterviewSheet.getRange(row, 2, 1, 26).copyTo(vpdecisionSheet.getRange(vpdecisionSheetLastRow+ 1, 2));
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(vpdecisionSheet.getRange(vpdecisionSheetLastRow+ 1, 2));
         vpdecisionSheet.getRange(vpdecisionSheetLastRow+1, 1).setValue(new Date());
+        vpdecisionSheet.getRange(vpdecisionSheetLastRow+1, 33).setValue("YES");
         sendVPEMails();
       }
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Physical Interview", candidateDetails[0][0]);
+//      decisionMatrix("physical", row);
+      calculateDailySummary("Physical Interview");
       physicalInterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
-      physicalInterviewSheet.getRange(row, column).setValue("");
+      physicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Physical Interview" && column === 27 && status === "NO") {
+//***********************************************************************************************************************************************************************************    
+  if(sheetName === "Physical Interview" && column === PHYSICALDECISIONCOLUMN && status === "NO") {
     var result =  ui.alert("Are you sure you want to end the application process for this candidate?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      calculateDailySummary("Physical Interview");
-      var candidateDetails = physicalInterviewSheet.getRange(row, 2, 1, 2).getValues();
+      var candidateDetails = physicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 34).getValues();
       var failedSheetLastRow = getLastRow(failedSheet, 1);
-      var values = physicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Physical Interview", values[0][0]);
-      //sendRejectEmail(candidateDetails[0][0], candidateDetails[0][1]);
-      physicalInterviewSheet.getRange(row, 2, 1, 25).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
-      failedSheet.getRange(failedSheetLastRow+1, 1).setValue(new Date());
-      failedSheet.getRange(failedSheetLastRow+1, 27).setValue("Failed");
-      failedSheet.getRange(failedSheetLastRow+1, 28).setValue("Physical Interview");
+      physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
+      failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+      failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("Physical Interview");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Physical Interview", candidateDetails[0][0]);
+      //sendRejectEmail(candidateDetails[0][1], candidateDetails[0][2]);
+      calculateDailySummary("Physical Interview");
       physicalInterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
-      physicalInterviewSheet.getRange(row, column).setValue("");
+      physicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Physical Interview" && column === 27 && status === "WAITING LIST") {
+//***********************************************************************************************************************************************************************************      
+  if(sheetName === "Physical Interview" && column === PHYSICALDECISIONCOLUMN && status === "WAITING LIST") {
     var result = ui.alert("Are you sure you want to move this candidate to the waiting list?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      var candidateDetails = physicalInterviewSheet.getRange(row, 2, 1, 2).getValues();
+      var candidateDetails = physicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 34).getValues();
       var waitingListSheetLastRow = getLastRow(waitingSheet, 1);
-      var values = physicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Physical Interview", values[0][0]);
-      physicalInterviewSheet.getRange(row, 2, 1, 8).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
-      waitingSheet.getRange(waitingListSheetLastRow+1, 1).setValue(new Date());
-      waitingSheet.getRange(waitingListSheetLastRow+1, 10).setValue("Waiting List");
+      physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(waitingSheet.getRange(waitingListSheetLastRow+ 1, 2));
+      waitingSheet.getRange(waitingListSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+      waitingSheet.getRange(waitingListSheetLastRow+1, WAITINGLISTSTATUSCOLUMN).setValue("Waiting List");
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Physical Interview", candidateDetails[0][0]);
       physicalInterviewSheet.deleteRow(row);
     }
     if (result == ui.Button.NO) {
       physicalInterviewSheet.getRange(row,  column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Physical Interview" && column === 27 && status === "MAYBE"){
+//***********************************************************************************************************************************************************************************        
+  if(sheetName === "Physical Interview" && column === PHYSICALDECISIONCOLUMN && status === "MAYBE"){
     var result = ui.alert("Are you sure you want to move this candidate through but flag "+
                           "candidate as a maybe?", ui.ButtonSet.YES_NO);
     
     if (result == ui.Button.YES) {
-      decisionMatrix("physical", row);
-      calculateDailySummary("Physical Interview");
+      var candidateDetails = physicalInterviewSheet.getRange(row, TIMESTAMPCOLUMN, 1, 34).getValues();
       var hiredSheetLastRow = getLastRow(hiredSheet, 1);
-      var values = physicalInterviewSheet.getRange(row, 1, 1, 4).getValues();
-      updateTAT(values[0][2], values[0][3], "Physical Interview", values[0][0]);
-      var decision = makeFinalDecision(hiredSheetLastRow+1, physicalInterviewSheet.getRange(row, 13).getValue(), physicalInterviewSheet.getRange(row, 17).getValue(), "MAYBE");
+      var decision = makeFinalDecision(hiredSheetLastRow+1, candidateDetails[0][21], candidateDetails[0][22], "YES");
       if(decision === "FULL TIME HIRE"){
-        physicalInterviewSheet.getRange(row, 2, 1, 25).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
-        hiredSheet.getRange(hiredSheetLastRow+1, 27).setValue("MAYBE");
-        hiredSheet.getRange(row, 28).setValue("FULL TIME HIRE");
-        hiredSheet.getRange(row, 29).setValue("Awaiting Feedback");
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("MAYBE");
+        hiredSheet.getRange(row, 34).setValue("FULL TIME HIRE");
+        hiredSheet.getRange(row, 35).setValue("Awaiting Feedback");
       }
       else if(decision === "CONTRACT"){
-        physicalInterviewSheet.getRange(row, 2, 1, 25).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
-        hiredSheet.getRange(hiredSheetLastRow+1, 27).setValue("MAYBE");
-        hiredSheet.getRange(row, 28).setValue("CONTRACT");
-        hiredSheet.getRange(row, 29).setValue("Awaiting Feedback");
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+ 1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("MAYBE");
+        hiredSheet.getRange(row, 34).setValue("CONTRACT");
+        hiredSheet.getRange(row, 35).setValue("Awaiting Feedback");
       }
       else{
         var vpdecisionSheetLastRow = getLastRow(vpdecisionSheet, 1);
-        physicalInterviewSheet.getRange(row, 2, 1, 26).copyTo(vpdecisionSheet.getRange(vpdecisionSheetLastRow+ 1, 2));
-        vpdecisionSheet.getRange(vpdecisionSheetLastRow+1, 1).setValue(new Date());
+        physicalInterviewSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(vpdecisionSheet.getRange(vpdecisionSheetLastRow+ 1, 2));
+        vpdecisionSheet.getRange(vpdecisionSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        vpdecisionSheet.getRange(vpdecisionSheetLastRow+1, 33).setValue("YES");
         sendVPEMails();
       }
+      updateTAT(candidateDetails[0][2], candidateDetails[0][3], "Physical Interview", candidateDetails[0][0]);
+//      decisionMatrix("physical", row);
+      calculateDailySummary("Physical Interview");
       physicalInterviewSheet.deleteRow(row);
     } 
     if (result == ui.Button.NO) {
-      physicalInterviewSheet.getRange(row, column).setValue("");
+      physicalInterviewSheet.getRange(row, column).setValue(e.oldValue);
     } 
   }
-  
-  if(sheetName === "Accepted" && column === 29 && status === "Offer Sent"){
-    hiredSheet.getRange(row, 30).setValue("Completed");
+//***********************************************************************************************************************************************************************************          
+  if(sheetName === "Accepted" && column === 35 && status === "Offer Sent"){
+    hiredSheet.getRange(row, 36).setValue("Completed");
   }
-  
+//***********************************************************************************************************************************************************************************          
+  //Begin from here; Rewrite decision matrix and scheduler for first technical interview and link other stages to failed 
+  //and waiting list dcisons from phone and technical interviews
+  //Put duplicate checker on every sheet
   if(sheetName === "VP Decision Sheet"){ 
     if(status === "Contract"){
       var result = ui.alert("Are you sure you want to hire this candidate on contract?", ui.ButtonSet.YES_NO);
     
       if (result == ui.Button.YES) {
         var hiredSheetLastRow = getLastRow(hiredSheet, 1);
-        vpdecisionSheet.getRange(row, 2, 1, 26).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 28).setValue("CONTRACT");
-        hiredSheet.getRange(hiredSheetLastRow+1, 29).setValue("Awaiting Feedback");
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
+        vpdecisionSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("VP - YES");
+        hiredSheet.getRange(hiredSheetLastRow+1, 34).setValue("CONTRACT");
+        hiredSheet.getRange(hiredSheetLastRow+1, 35).setValue("Awaiting Feedback");
         vpdecisionSheet.deleteRow(row);
       } 
       if (result == ui.Button.NO) {
-        vpdecisionSheet.getRange(row, column).setValue("");
+        vpdecisionSheet.getRange(row, column).setValue(e.oldValue);
       } 
     }
     if(status === "Full-Time Hire"){
@@ -614,14 +911,15 @@ function onEdit(e){
     
       if (result == ui.Button.YES) {
         var hiredSheetLastRow = getLastRow(hiredSheet, 1);
-        vpdecisionSheet.getRange(row, 2, 1, 26).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
-        hiredSheet.getRange(hiredSheetLastRow+1, 28).setValue("FULL TIME HIRE");
-        hiredSheet.getRange(hiredSheetLastRow+1, 29).setValue("Awaiting Feedback");
-        hiredSheet.getRange(hiredSheetLastRow+1, 1).setValue(new Date());
+        vpdecisionSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(hiredSheet.getRange(hiredSheetLastRow+1, 2));
+        hiredSheet.getRange(hiredSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        hiredSheet.getRange(hiredSheetLastRow+1, 33).setValue("VP - YES");
+        hiredSheet.getRange(hiredSheetLastRow+1, 34).setValue("FULL TIME HIRE");
+        hiredSheet.getRange(hiredSheetLastRow+1, 35).setValue("Awaiting Feedback");
         vpdecisionSheet.deleteRow(row);
       } 
       if (result == ui.Button.NO) {
-        vpdecisionSheet.getRange(row, column).setValue("");
+        vpdecisionSheet.getRange(row, column).setValue(e.oldValue);
       } 
     }
     if(status === "Reject"){
@@ -629,55 +927,20 @@ function onEdit(e){
     
       if (result == ui.Button.YES) {
         var failedSheetLastRow = getLastRow(failedSheet, 1);
-        vpdecisionSheet.getRange(row, 2, 1, 25).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
-        failedSheet.getRange(failedSheetLastRow+1, 27).setValue("Failed");
-        failedSheet.getRange(failedSheetLastRow+1, 28).setValue("VP Decision");
-        failedSheet.getRange(failedSheetLastRow+1, 1).setValue(new Date());
+        failedSheet.getRange(failedSheetLastRow+1, TIMESTAMPCOLUMN).setValue(new Date());
+        vpdecisionSheet.getRange(row, EMAILADDRESSCOLUMN, 1, 31).copyTo(failedSheet.getRange(failedSheetLastRow+1, 2));
+        failedSheet.getRange(failedSheetLastRow+1, FAILEDSTATUSCOLUMN).setValue("Failed");
+        failedSheet.getRange(failedSheetLastRow+1, FAILEDSTAGECOLUMN).setValue("VP Decision");
         //sendRejectEmail(candidateDetails[0][0], candidateDetails[0][1]);
         vpdecisionSheet.deleteRow(row);
       } 
       if (result == ui.Button.NO) {
-        vpdecisionSheet.getRange(row, column).setValue("");
+        vpdecisionSheet.getRange(row, column).setValue(e.oldValue);
       } 
     }
   }
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
-function update(interviewer, stage){
-  var lastRow, values, atRow;
-  switch(stage){
-    case "Phone": lastRow = getLastRow(phoneInterviewSheet, 1);
-      values = interviewerSheet.getRange(2, 1, lastRow, 1).getValues();
-      break;
-    case "Technical": lastRow = getLastRow(technicalInterviewSheet, 1);
-      values = technicalInterviewerSheet.getRange(2, 1, lastRow, 1).getValues();
-      break;
-    case "Physical": lastRow = getLastRow(physicalInterviewSheet, 1);
-      values = physicalInterviewerSheet..getRange(2, 1, lastRow, 1).getValues();
-      break;
-  }
-  
-  for(var i = 2; i <= lastRow; i++){
-    if(values[i-2][0] === interviewer){
-      atRow = i;
-    }
-  }
-  
-  switch(stage){
-    case "Phone": var prev = interviewerSheet.getRange(atRow, 5).getValue();
-      interviewerSheet.getRange(atRow, 5).setValue(prev+1);
-      break;
-    case "Technical": var prev = technicalInterviewerSheet.getRange(atRow, 5).getValue();
-      technicalInterviewerSheet.getRange(atRow, 5).setValue(prev+1);
-      break;
-    case "Physical": var prev = physicalInterviewerSheet.getRange(atRow, 5).getValue();
-      physicalInterviewerSheet.getRange(atRow, 5).setValue(prev+1);
-      break;
-  }
-}
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function updateTAT(name, role, stage, timeOfEntry){
   var timeOfExit = new Date();
   var lastRow = getLastRow(tatSheet, 1);
@@ -690,14 +953,20 @@ function updateTAT(name, role, stage, timeOfEntry){
       if(stage === "Prospectives"){
         tatSheet.getRange(i+2, 3).setValue(duration);
       }
-      if(stage === "Phone Interview"){
+      if(stage === "Portfolio Review"){
         tatSheet.getRange(i+2, 4).setValue(duration);
       }
-      if(stage === "Technical Interview"){
+      if(stage === "Phone Interview"){
         tatSheet.getRange(i+2, 5).setValue(duration);
       }
-      if(stage === "Physical Interview"){
+      if(stage === "First Technical Interview"){
         tatSheet.getRange(i+2, 6).setValue(duration);
+      }
+      if(stage === "Technical Interview"){
+        tatSheet.getRange(i+2, 7).setValue(duration);
+      }
+      if(stage === "Physical Interview"){
+        tatSheet.getRange(i+2, 8).setValue(duration);
       }
       return;
     }
@@ -709,18 +978,23 @@ function updateTAT(name, role, stage, timeOfEntry){
   if(stage === "Prospectives"){
     tatSheet.getRange(lastRow+1, 3).setValue(duration);
   }
-  if(stage === "Phone Interview"){
+  if(stage === "Porfolio Review"){
     tatSheet.getRange(lastRow+1, 4).setValue(duration);
   }
-  if(stage === "Technical Interview"){
+  if(stage === "Phone Interview"){
     tatSheet.getRange(lastRow+1, 5).setValue(duration);
   }
-  if(stage === "Physical Interview"){
+   if(stage === "First Technical Interview"){
     tatSheet.getRange(lastRow+1, 6).setValue(duration);
   }
+  if(stage === "Technical Interview"){
+    tatSheet.getRange(lastRow+1, 7).setValue(duration);
+  }
+  if(stage === "Physical Interview"){
+    tatSheet.getRange(lastRow+1, 8).setValue(duration);
+  }
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function makeFinalDecision(row, phone, skype, physical){
   if(skype !== ""){
     if((phone === "YES" && skype === "YES" && physical === "YES") || (phone === "MAYBE" && skype === "YES" && physical === "YES")){
@@ -744,8 +1018,7 @@ function makeFinalDecision(row, phone, skype, physical){
     }
   }
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function calculateDailySummary(stage){
   var lastRow = getLastRow(summarySheet, 1);
   var values = summarySheet.getRange(2, 1, lastRow, 1).getValues();
@@ -761,13 +1034,21 @@ function calculateDailySummary(stage){
         var oldValue = summarySheet.getRange(i+2, 2).getValue();
         summarySheet.getRange(i+2, 2).setValue(oldValue+1);
       }
-      if(stage === "Technical Interview"){
+      if(stage === "Porfolio Review"){
         var oldValue = summarySheet.getRange(i+2, 3).getValue();
         summarySheet.getRange(i+2, 3).setValue(oldValue+1);
       }
-      if(stage === "Physical Interview"){
+      if(stage === "First Technical Interview"){
         var oldValue = summarySheet.getRange(i+2, 4).getValue();
         summarySheet.getRange(i+2, 4).setValue(oldValue+1);
+      }
+      if(stage === "Technical Interview"){
+        var oldValue = summarySheet.getRange(i+2, 5).getValue();
+        summarySheet.getRange(i+2, 5).setValue(oldValue+1);
+      }
+      if(stage === "Physical Interview"){
+        var oldValue = summarySheet.getRange(i+2, 6).getValue();
+        summarySheet.getRange(i+2, 6).setValue(oldValue+1);
       }
       return;
     }
@@ -777,17 +1058,24 @@ function calculateDailySummary(stage){
     var oldValue = summarySheet.getRange(lastRow+1, 2).getValue();
     summarySheet.getRange(lastRow+1, 2).setValue(oldValue+1);
   }
-  if(stage === "Technical Interview"){
+  if(stage === "Portfolio Review"){
     var oldValue = summarySheet.getRange(lastRow+1, 3).getValue();
     summarySheet.getRange(lastRow+1, 3).setValue(oldValue+1);
   }
-  if(stage === "Physical Interview"){
+  if(stage === "First Technical Interview"){
     var oldValue = summarySheet.getRange(lastRow+1, 4).getValue();
     summarySheet.getRange(lastRow+1, 4).setValue(oldValue+1);
   }
+  if(stage === "Technical Interview"){
+    var oldValue = summarySheet.getRange(lastRow+1, 5).getValue();
+    summarySheet.getRange(lastRow+1, 5).setValue(oldValue+1);
+  }
+  if(stage === "Physical Interview"){
+    var oldValue = summarySheet.getRange(lastRow+1, 6).getValue();
+    summarySheet.getRange(lastRow+1, 6).setValue(oldValue+1);
+  }
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function getLastRow(sheet, colToCheck){
   var lastRow = sheet.getMaxRows();
   var values = sheet.getRange(1, colToCheck, lastRow).getValues();
@@ -798,8 +1086,7 @@ function getLastRow(sheet, colToCheck){
   
   return lastRow;
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function sendRejectEmail_Phone(name, recipient){
   var subject = "APPLICATION UPDATE";
   var body = "Dear "+name+",\n\nWe appreciate the interest in joining our journey to financial happiness. Please note that we consider factors around clarity,"
@@ -811,8 +1098,7 @@ function sendRejectEmail_Phone(name, recipient){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function sendRejectEmail_Technical(name, recipient){
   var subject = "APPLICATION UPDATE";
   var body = "Dear "+name+",\n\nThank you very much for the interest in joining our journey to financial happiness and we congratulate you for coming this far "
@@ -824,8 +1110,7 @@ function sendRejectEmail_Technical(name, recipient){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function moveToTechnicalInterviewEmail(name, recipient){
   var subject = "APPLICATION UPDATE";
   var body = "Dear "+name+",\n\nWe appreciate the time you have invested so far in the recruitment process and we are excited "
@@ -837,8 +1122,7 @@ function moveToTechnicalInterviewEmail(name, recipient){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function moveToPhysicalInterviewEmail(name, recipient){
   var subject = "APPLICATION UPDATE";
   var body = "Dear "+name+",\n\nWe appreciate the time you have invested so far in the recruitment process and we are excited "
@@ -850,8 +1134,7 @@ function moveToPhysicalInterviewEmail(name, recipient){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function sendNotificationEmail(type){
   if(type == "internship"){
     var sheetlink = "https://docs.google.com/spreadsheets/d/1VUXFWVh27QlaZoE9uhm18Ffsg_D4AK3yLWeyV5eHJTY/edit#gid=1828302115";
@@ -870,8 +1153,7 @@ function sendNotificationEmail(type){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function sendReceiptEmail(name, recipient){
   var subject = "APPLICATION RECEIVED";
   var body = "Hi "+name+",\n\nYou are receiving this email because you just submitted a job application form to TeamApt Limited.\n\n"+
@@ -882,8 +1164,7 @@ function sendReceiptEmail(name, recipient){
     noReply: true
   });
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function sendVPEMails(){
   var sheetLink = "https://docs.google.com/spreadsheets/d/1VUXFWVh27QlaZoE9uhm18Ffsg_D4AK3yLWeyV5eHJTY/edit#gid=888934852";
   var subject = "URGENT DECISION TO BE MADE";
@@ -897,8 +1178,7 @@ function sendVPEMails(){
     });
   }
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function getEmployeeEmail(employeeName) {
   var employeeSheet = SpreadsheetApp.getActive().getSheetByName("Misc");
   var lastRow = getLastRow(employeeSheet, 19);
@@ -910,37 +1190,7 @@ function getEmployeeEmail(employeeName) {
   }
   return null;
 }
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
-function _manualScheduling() {
-  var candidates = SpreadsheetApp.getActive().getRange("Phone Interview!B44:F96").getValues();
-  //Logger.log(candidates);
-  
-  var interviewerSheet = SpreadsheetApp.getActive().getSheetByName("Interviewers");
-  var lastRow = getLastRow(interviewerSheet, 1);
-  var interviewerList = interviewerSheet.getRange(2, 1, lastRow).getValues();
-  
-  var interviewers = []
-  
-  for (var i in interviewerList) {
-    if (interviewerList[i] != "") {
-      interviewers.push(interviewerList[i]);   
-    }
-  }
-  
-  Logger.log(interviewers);
-  return;
-  
-  for (var i in candidates) {
-    Logger.log(candidates[i]);
-  }
-}
-
-var pickInterviewers = function _pickInterviewer() {
-  Logger.log("Hello");
-}
-//-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
-
+//***********************************************************************************************************************************************************************************          
 function decisionMatrix(sheet, row){
   var candidateValues, interviewerValues, physicalInterviewDecision;
   var lastRow = getLastRow(decisionMatrixSheet, 1);
@@ -1025,7 +1275,12 @@ function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber
       interviewerFunctions = interviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
       interviewersLastCallTime = interviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
       interviewsTaken = interviewerSheet.getRange(2, INTERVIEWERCALLSTAKENCOLUMN, lastRow, 1).getValues();
-      break;            
+      break;
+    case "First Technical": var lastRow = getLastRow(technicalInterviewerSheet, INTERVIEWERNAMECOLUMN);
+      interviewerFunctions = technicalInterviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
+      interviewersLastCallTime = technicalInterviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
+      interviewsTaken = technicalInterviewerSheet.getRange(2, INTERVIEWERCALLSTAKENCOLUMN, lastRow, 1).getValues();
+      break;
     case "Technical": var lastRow = getLastRow(technicalInterviewerSheet, INTERVIEWERNAMECOLUMN);
       interviewerFunctions = technicalInterviewerSheet.getRange(2, INTERVIEWERFUNCTIONSCOLUMN, lastRow, 1).getValues();
       interviewersLastCallTime = technicalInterviewerSheet.getRange(2, INTERVIEWERCALLTIMECOLUMN, lastRow, 1).getValues();
@@ -1054,6 +1309,8 @@ function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber
       break;
     case "Portfolio Review": interviewer = interviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
       break;
+    case "First Technical": interviewer = technicalInterviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
+      break;
     case "Technical": interviewer = technicalInterviewerSheet.getRange(atRow, INTERVIEWERNAMECOLUMN).getValue();
       break;
   }
@@ -1080,10 +1337,6 @@ function scheduler(type, candidateFunction, candidateEmail, candidatePhoneNumber
   sendInvites(type, candidateEmail, candidatePhoneNumber, candidateCV, interviewer, callTime, candidatePortfolio);
   updateSummarySheet(interviewer,atRow, type, callTime);
   return schedule;
-}
-
-function testTo(){
-  scheduler("Physical", "Engineering", "cachugbu@teamapt.com", "07015204118", "something");
 }
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------  
 
@@ -1261,30 +1514,4 @@ function isPresent(number, array){
     }
   }
   return false;
-}
-
-function tests(){
-  var timeOfInterview;
-  var date = new Date();
-  date.setDate(date.getDate()+1);
-  var takenTimes = [];
-  var calendar = CalendarApp.getCalendarById("teniolorunda@teamapt.com");
-  var startTime = new Date(date); var endTime = new Date(date);
-  startTime.setHours(8,0,0);
-  endTime.setHours(14,0,0);
-  var eventsForToday = calendar.getEvents(startTime, endTime);
-  for(i in eventsForToday){
-    takenTimes.push(eventsForToday[i].getStartTime().getHours());
-    takenTimes.push(eventsForToday[i].getEndTime().getHours());
-  }
-  for(var j = 8; j <= 14; j++){
-    if(!isPresent(j, takenTimes)){
-      timeOfInterview = j;
-      break;
-    }
-  }
-  date.setHours(timeOfInterview, 0, 0);
-  Logger.log(takenTimes);
-  Logger.log(timeOfInterview);
-  Logger.log(date);
 }
